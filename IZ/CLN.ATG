@@ -1,0 +1,57 @@
+COMPILER TURINGMACHINE
+CHARACTERS
+	letter = 'A'..'Z' + 'a'..'z'.
+	digit = "0123456789".
+	symbol = ANY - '"' .
+	cr  = '\r'.  lf  = '\n'.  tab = '\t'.
+
+TOKENS
+	ident  = letter {letter | digit}.
+	number = digit {digit}.
+	float = digit {digit} "." {digit} ['E'['+'|'-'] digit {digit}].
+	string = '"'{symbol}'"'.
+	Next = "->".
+
+  
+COMMENTS FROM "//" TO lf
+
+IGNORE cr + lf + tab
+
+PRODUCTIONS
+	TURINGMACHINE = SetLine.
+	SetLine = '{'SetOperator'}'.
+	SetOperator = 	Operator {';' Operator}.
+	Operator =["."Label ':'] Operation.
+		Label =  Ident |  Number.
+			Ident = ident .
+			Number = number.
+		Operation = TuringMachineOperations | If | While | NewIdent | Assign | GoTo | Write | Read.
+			TuringMachineOperations = ChangeState | ChangeRule | TuringMachine | ExternalAlphabet | SetOfStates | RuleSet.
+				ChangeRule = "changeR" RuleSet "(" rule "is" rule ")".
+				ChangeState = "changeS" SetOfStates "(" State '=' State ")".
+				TuringMachine = "#T" [Number] [":(" ExternalAlphabet ',' SetOfStates ',' RuleSet ")" ].
+					ExternalAlphabet = "#A" [Number] [":("String {',' String} ')' ].
+					String = string.
+					SetOfStates = "#Q" [Number] [":(" State {',' State }  ")" ].
+						State = 'q' [Number].
+					RuleSet = "#P" [Number] [":(" rule  {',' rule}")" ].
+						rule = "(" State [ident] Next State [ident] [shift]")".
+							shift = 'L' | 'R' | 'N'.
+			If = "if" "(" BooleanValue  ")" SetLine  ["else" SetLine ].
+				BooleanValue = (Compare {LogicOperation Compare}).
+					Compare = ExpressionS {RelativeOperation ExpressionS}.
+						ExpressionS = "("Expression")" | Expression.
+						Expression = ((Ident | Number) {Oper (Ident | Number)}).
+							Oper = '+' | '-' | '*' | '^' | '/'.
+						RelativeOperation = ("==" | '<' | '>' | "!=").
+					LogicOperation = "||" | "&&".
+						
+			While = "while(" BooleanValue ")" SetLine.
+			Assign = ('T' [number] '=' TuringMachine) | ('A' [number] '=' ExternalAlphabet) | ('Q' [number] '=' SetOfStates) | ('P' [number] '=' RuleSet) | (Ident '=' {Expression}{TuringMachineOperations}) .
+			NewIdent = "new" Ident "as" Type.
+				Type = "TuringMachine" | "SetOfStates" | "RuleSet" | "Integer" | "String" | "Float".
+			GoTo = "goto" Label.
+			Write = "write<<" WhatWrite.
+			WhatWrite = ident | string.
+			Read = "read>>" ident. 
+END TURINGMACHINE.
